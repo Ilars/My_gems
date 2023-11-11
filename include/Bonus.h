@@ -2,6 +2,7 @@
 #include "Board.h"
 #include "Gem.h"
 
+class Board;
 
 class Brush : public Gem {
 private:
@@ -10,10 +11,10 @@ private:
 protected:
 	int _num_affected_gems;
 public:
-	Brush(float x, float y, float size, COLORS color = COLORS::NUM_COLORS);
+	Brush(Board& board, float x, float y, float size, COLORS color = COLORS::NUM_COLORS);
 
 	int GetNumTargets() const { return _num_affected_gems; };
-	virtual void Activate(Board& board, const sf::Vector2i& coord) override;
+	virtual void Activate(const sf::Vector2i& coord) override;
 	~Brush() {};
 };
 
@@ -25,9 +26,9 @@ private:
 protected:
 	int _num_affected_gems;
 public:
-	Bomb(float x, float y, float size, COLORS color = COLORS::NUM_COLORS);
+	Bomb(Board& board, float x, float y, float size, COLORS color = COLORS::NUM_COLORS);
 	int GetNumTargets() const { return _num_affected_gems; };
-	virtual void Activate(Board& board, const sf::Vector2i& coord) override;
+	virtual void Activate(const sf::Vector2i& coord) override;
 	~Bomb() {};
 
 };

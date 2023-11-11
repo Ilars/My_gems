@@ -16,7 +16,7 @@ void Board::LoadBoard() {
 	for (int i = 0; i < _dimension; i++) {
 		float y = (float)_space;
 		for (int j = 0; j < _dimension; j++) {
-			auto gem = make_shared<Gem>(Gem(x, y, _block_size));
+			auto gem = make_shared<Gem>(Gem(*this, x, y, _block_size));
 			COLORS color;
 			do {
 				color = (static_cast<COLORS>
@@ -120,16 +120,16 @@ void Board::SetRandomBonus(int key, std::set<int>& seq) {
 	};
 	auto bonus_color = _gems[bonus_pos.x][bonus_pos.y]->GetColor();
 	cout << bonus_pos.x << " " << bonus_pos.y <<"\n";
-	sf::Vector2f move_to(_space + bonus_pos.x * _block_size, _space + bonus_pos.y * _block_size);
+	sf::Vector2f move_to(_space /2+ bonus_pos.x * _block_size, _space + bonus_pos.y * _block_size);
 
 	std::shared_ptr<Gem> bonus;
 
 	if (bonus_threshold % 100 < BONUS_CHANCE) {
 		if (bonus_threshold % 2) {
-			bonus = std::make_shared<Bomb>(bonus_pos.x, bonus_pos.y, _block_size);
+			bonus = std::make_shared<Bomb>(*this, bonus_pos.x, bonus_pos.y, _block_size);
 		}
 		else {
-			bonus = std::make_shared<Brush>(bonus_pos.x, bonus_pos.y, _block_size);
+			bonus = std::make_shared<Brush>(*this, bonus_pos.x, bonus_pos.y, _block_size);
 		}
 		bonus->SetColor(bonus_color);
 		bonus->SetTexture();
@@ -152,20 +152,23 @@ void Board::Recolor(std::vector<sf::Vector2i> targets, sf::Vector2i position) {
 	}
 }
 
+void Board::DestroySequence(std::set<int>& seq_elems) {
+	for (auto key : seq_elems) {
+		sf::Vector2i position{ key / _dimension, key % _dimension };
+		_gems[position.x][position.y]->Activate(position);
+		_gems[position.x][position.y]->Dead();
+		_for_dropping[position.x].insert(position.y);
+	}
+}
+
 bool Board::IfSequence(std::set<int>& seq_elems) {
 	if (seq_elems.size() >= DROP_THRESHOLD) {
-		for (auto key : seq_elems) {
-			sf::Vector2i position{ key / _dimension, key % _dimension };
-			_gems[position.x][position.y]->Activate(*this, position);
-			_gems[position.x][position.y]->Dead();
-			_for_dropping[position.x].insert(position.y);
-		}
+		DestroySequence(seq_elems);
 		if (seq_elems.size() >= COMBO_SIZE_FOR_BONUS)
 		{
 			int key = *seq_elems.begin();
 			SetRandomBonus(key, seq_elems);
 		}
-
 		seq_elems.clear();
 		return true;
 	}
@@ -176,8 +179,8 @@ bool Board::IfSequence(std::set<int>& seq_elems) {
 
 
 void Board::DropStep(vector<int>& for_step) {
-	sf::Vector2f speed(0.f, 0.2f);
-	for (int i = 0; i < int(_block_size * 5); i++) {
+	sf::Vector2f speed(0.f, 0.25f);
+	for (int i = 0; i < int(_block_size * 4); i++) {
 		for (int j = 0; j < _dimension; j++) {
 			for (int k = 0; k <= for_step[j]; k++)
 				_gems[j][k]->Move(speed);
@@ -201,25 +204,38 @@ void Board::MoveToTop() {
 			auto row = _for_dropping[colomn].end();
 			row--;
 			for (unsigned int i = 1; i <= _for_dropping[colomn].size(); i++, row--) {
-				auto ngem = make_shared<Gem>(Gem(colomn, *row, _block_size));
+				auto ngem = make_shared<Gem>(Gem(*this, colomn, *row, _block_size));
 				ngem->SetColor(static_cast<COLORS>
 					(rand() % static_cast<int>(COLORS::NUM_COLORS)));
 				ngem->SetTexture();
 				_gems[colomn][*row] = ngem;
 				_gems[colomn][*row]->
-					Move(sf::Vector2f(_space + colomn * _block_size, _space + (*row) * _block_size - (_block_size * (*row + i))));
+					Move(sf::Vector2f(_space/2 + colomn * _block_size, _space/2 + (*row) * _block_size - (_block_size * (*row + i))));
 
 			}
 		}
 	}
 }
 
+void Board::CheckFallen() {
+	vector<sf::Vector2i> for_check;
+	for (int colomn = 0; colomn < _dimension; colomn++) {
+		if (_for_dropping[colomn].size() > 0) {
+			auto row = _for_dropping[colomn].end();
+			row--;
+			for (int i = 0; i <= *row; i++)
+				for_check.push_back(sf::Vector2i{ colomn, i });
+		}
+		_for_dropping[colomn].clear();
+	}
+	IfDropped(for_check);
+}
+
 void Board::Dropping() {
+	MoveToTop();
+
 	vector<int> for_step(_dimension, -1);
 	unsigned int step = 1;
-
-	MoveToTop();
-	
 	bool is_falling = true;
 	while (is_falling) {
 		is_falling = false;
@@ -236,17 +252,8 @@ void Board::Dropping() {
 		DropStep(for_step);
 		step++;
 	}
-	vector<sf::Vector2i> for_check;
-	for (int colomn = 0; colomn < _dimension; colomn++) {
-		if (_for_dropping[colomn].size() > 0) {
-			auto row = _for_dropping[colomn].end();
-			row--;
-			for (int i = 0; i <= *row; i++)
-				for_check.push_back(sf::Vector2i{ colomn, i });
-		}
-		_for_dropping[colomn].clear();
-	}
-	IfDropped(for_check);
+
+	CheckFallen();
 }
 
 

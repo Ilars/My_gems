@@ -6,10 +6,7 @@ using namespace std;
 const unsigned int Brush::PAINT_TARGETS = 3;
 const unsigned int Brush::PAINT_RADIUS = 3;
 
-Brush::Brush(float x, float y, float size, COLORS color) {
-	setPosition(x, y);
-	setScale(sf::Vector2f(SCALE_RATE, SCALE_RATE));
-	_color = color;
+Brush::Brush(Board& board, float x, float y, float size, COLORS color): Gem(board, x, y, size, color) {
 	_texturePath = BRUSH_TEXTURE_PATH;
 	_num_affected_gems = PAINT_TARGETS;
 }
@@ -17,10 +14,7 @@ Brush::Brush(float x, float y, float size, COLORS color) {
 const unsigned int Bomb::BOMB_TARGETS = 5;
 
 
-Bomb::Bomb(float x, float y, float size, COLORS color) {
-	setPosition(x, y);
-	setScale(sf::Vector2f(SCALE_RATE, SCALE_RATE));
-	_color = color;
+Bomb::Bomb(Board& board, float x, float y, float size, COLORS color): Gem(board, x, y, size, color) {
 	_texturePath = BOMB_TEXTURE_PATH;
 	_num_affected_gems = BOMB_TARGETS;
 }
@@ -30,8 +24,8 @@ void Gem::Move(sf::Vector2f speed) {
 	move(speed);
 }
 
-void Brush::Activate(Board& board,const sf::Vector2i& coord) {
-	const sf::Vector2i& board_size = { board.GetDimension(), board.GetDimension() };
+void Brush::Activate(const sf::Vector2i& coord) {
+	const sf::Vector2i& board_size = { _board.GetDimension(), _board.GetDimension() };
 	vector<sf::Vector2i> targets;
 	for (int i = 0; i < _num_affected_gems; i++) {
 		while (true) {
@@ -63,12 +57,12 @@ void Brush::Activate(Board& board,const sf::Vector2i& coord) {
 		}
 	}
 
-	board.Recolor(targets, coord);
+	_board.Recolor(targets, coord);
 }
 
 
-void Bomb::Activate(Board& board, const sf::Vector2i& coord) {
-	const sf::Vector2i& board_size = { board.GetDimension(), board.GetDimension() };
+void Bomb::Activate(const sf::Vector2i& coord) {
+	const sf::Vector2i& board_size = { _board.GetDimension(), _board.GetDimension() };
 	vector<sf::Vector2i> targets;
 	set<int> unique_targets;
 	unique_targets.insert(coord.x * board_size.x + coord.y);
@@ -80,5 +74,5 @@ void Bomb::Activate(Board& board, const sf::Vector2i& coord) {
 		targets.push_back({ c / board_size.x, c % board_size.x });
 	}
 
-	board.AddForDropping(targets);
+	_board.AddForDropping(targets);
 }

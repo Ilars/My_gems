@@ -29,11 +29,13 @@ private:
 
 	bool IsColorMatch(const sf::Vector2i& gem_pos, const sf::Vector2i& neighbor) const;
 	void SearchSequence(sf::Vector2i& block_pos, std::set<int>& seq_elems);
+	void DestroySequence(std::set<int>& seq_elems);
 	bool IfSequence(std::set<int>& seq_elems);
 
 
 	void DropStep(std::vector<int>& for_step);
 	void MoveToTop();
+	void CheckFallen();
 	void Dropping();
 
 	sf::Vector2i ChooseRandInRadius(int radius, sf::Vector2i pos);

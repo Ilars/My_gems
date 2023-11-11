@@ -14,8 +14,7 @@ const vector<sf::Color> Gem::AVAILABLE_COLORS = {
 
 void Gem::SetColor(COLORS color) {
 	_color = color;
-	if (color != COLORS::NUM_COLORS)
-		setColor(AVAILABLE_COLORS[static_cast<int>(color)]);
+	setColor(AVAILABLE_COLORS[static_cast<int>(color)]);
 	
 }
 
@@ -29,7 +28,7 @@ void Gem::SetTexture() {
 
 }
 
-Gem::Gem(float x, float y, float size, COLORS color) {
+Gem::Gem(Board& board, float x, float y, float size, COLORS color): _board(board) {
 	setPosition(x,y);
 	setScale(sf::Vector2f(SCALE_RATE, SCALE_RATE));
 	_color = color;
